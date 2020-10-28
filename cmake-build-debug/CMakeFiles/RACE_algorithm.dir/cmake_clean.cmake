@@ -1,5 +1,4 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/RACE_algorithm.dir/Race.cpp.o"
   "CMakeFiles/RACE_algorithm.dir/main.cpp.o"
   "RACE_algorithm"
   "RACE_algorithm.pdb"

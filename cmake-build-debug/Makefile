@@ -143,33 +143,6 @@ RACE_algorithm/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/RACE_algorithm.dir/build.make CMakeFiles/RACE_algorithm.dir/build
 .PHONY : RACE_algorithm/fast
 
-Race.o: Race.cpp.o
-
-.PHONY : Race.o
-
-# target to build an object file
-Race.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/RACE_algorithm.dir/build.make CMakeFiles/RACE_algorithm.dir/Race.cpp.o
-.PHONY : Race.cpp.o
-
-Race.i: Race.cpp.i
-
-.PHONY : Race.i
-
-# target to preprocess a source file
-Race.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/RACE_algorithm.dir/build.make CMakeFiles/RACE_algorithm.dir/Race.cpp.i
-.PHONY : Race.cpp.i
-
-Race.s: Race.cpp.s
-
-.PHONY : Race.s
-
-# target to generate assembly for a file
-Race.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/RACE_algorithm.dir/build.make CMakeFiles/RACE_algorithm.dir/Race.cpp.s
-.PHONY : Race.cpp.s
-
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -206,9 +179,6 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... RACE_algorithm"
-	@echo "... Race.o"
-	@echo "... Race.i"
-	@echo "... Race.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

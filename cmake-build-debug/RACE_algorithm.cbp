@@ -84,9 +84,6 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/tanmay/CLionProjects/RACE_algorithm/Race.cpp">
-			<Option target="RACE_algorithm"/>
-		</Unit>
 		<Unit filename="/home/tanmay/CLionProjects/RACE_algorithm/main.cpp">
 			<Option target="RACE_algorithm"/>
 		</Unit>
