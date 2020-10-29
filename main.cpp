@@ -9,10 +9,21 @@ struct FHash{
 struct PHash{
     int pc,fresh,reused,period;
 };
-std::string RACE(int inode,int block,int pc,int curTime){
+struct DoubleReturn{
+    std::string stringValue;
+    int intValue=0;
+};
+int threshold;
+struct Input{
+    int inode , block , pc , curTime;
+};
+
+//here Race is going to act as a partition allocator
+DoubleReturn RACE(int inode,int block,int pc,int curTime){
     std::vector<FHash*> F;
     std::vector<PHash*> P;
     int check=0;
+    DoubleReturn Return;
     //line 3
     for (auto i : P)
     {
@@ -45,12 +56,14 @@ std::string RACE(int inode,int block,int pc,int curTime){
                     {
                         f->lastTime = lastTime;
                     }
-                    return "looping";
+                    Return.stringValue= "looping";
+                    Return.intValue=f->period;
+                    return Return;
                 }
             }
         }
     }
-    //line 12
+
     for(auto f : F)
     {
         if(f->inode==inode && f->end==block-1)
@@ -66,8 +79,9 @@ std::string RACE(int inode,int block,int pc,int curTime){
             }
         }
         else {
-            f->inode=inode; f->start=f->end;
-            f->end=block; f->lastTime=curTime;
+            FHash *f1;
+            f1->inode=inode; f1->start=f->end;
+            f1->end=block; f1->lastTime=curTime;
             f->period=INFINITE;
             F.push_back(f);
             for (auto p : P)
@@ -84,21 +98,64 @@ std::string RACE(int inode,int block,int pc,int curTime){
     {
         if(p->reused>=p->fresh)
         {
-            return "Looping";
+            Return.stringValue= "Looping";
+            Return.intValue= p->period;
+            return Return;
         }
     }
     for (auto p : P)
-    {
-        if(p->fresh>threshold)
+    {//line number 21
+        if(p->fresh>threshold)//threshold is not defined
         {
-            return "Sequential";
+            Return.stringValue= "Sequential";
+            Return.intValue= 0;
+            return Return;
         }
     }
-    return "Other";
-
+    Return.stringValue="Other";
+    Return.intValue=0;
+    return Return;
 }
 
 int main()
 {
+    int bufferCache;
+    printf("Enter the size of Buffer cache:\t");
+    scanf("%d",&bufferCache);
+
+    int blockNum;
+    printf("Enter total number of blocks that you wish to enter: ");
+    scanf("%d",&blockNum);
+    std::vector<Input*> inputArray;
+    printf("Inode  |  Block  |  PC  |  curTime  |\n");
+    for(int i=0;i<blockNum;i++)
+    {
+        Input temp{};
+        scanf("%d %d %d %d",&temp.inode,&temp.block,&temp.pc,&temp.curTime);
+        inputArray.push_back(&temp);
+    }
+    for(auto Inp : inputArray)
+    {
+        DoubleReturn rr;
+        rr =RACE(Inp->inode,Inp->block,Inp->pc,Inp->curTime);
+    }
     return 0;
 }
+/*Yifeng Zhu, et.al.[25] proposed a Robust
+Adaptive buffer Cache management scheme
+(RACE). In this scheme cache is partitioned by
+using marginal gain function to allocate blocks
+according to its access pattern. To know block
+access pattern it keeps track of references to a
+block by using file hash table and PC hash table.
+File hash table uses attributes such as inode, start
+and end block number, the last access made to the
+first block, looping period, last access to the
+referenced block, last accessed block and a PC
+hash table uses attributes such as fresh counter,
+reuse counter. After pattern detection block is
+allocated into cache if free space is available or
+replacement is done with the existing replacement
+policy which is best suitable for the detected
+access pattern.
+ */
