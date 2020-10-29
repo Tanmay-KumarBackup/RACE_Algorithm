@@ -9,7 +9,7 @@ there will be two tables File table and PC table will decide that how the partit
 Dynamically the partition will change and will be displayed respectively.
 <br><br>
 <hr>
-right now there are few errors in the code such as:
+<b>Right now there are few errors in the code such as:</b>
 <br>i am inable to understand what is "ghost" reference time in line number 5 of pseudo code<br>
 what to update in the last reference time of the 1st block in line number 9 of pseudo code<br>
 how to check whether the access direction is reversed<br>
