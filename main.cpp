@@ -15,7 +15,7 @@ struct DoubleReturn{
     std::string stringValue;
     int intValue=0;
 };
-int threshold;
+int threshold=0;
 struct Input{
     int inode , block , pc , curTime;
 };
@@ -36,7 +36,7 @@ int findsP( PHash p){
     }
     return -1;
 }
-int lastCalled;
+int *lastCalled= nullptr;
 DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
     if(P.empty())
     {
@@ -90,14 +90,15 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
                     p->fresh--;
                     p->period = a * f->period + (1 - a) * p->period;//exponential average
                     //updating last reference time of the 1st block;
-
-                    if ()//access direction is reversed
+                    int index1=findsP(*p);
+                    if (index1<*lastCalled)//access direction is reversed
                     {
                         f->lastTime = lastTime;
                     }
                     Return.stringValue= "looping";
                     Return.intValue=f->period;
-                    lastCalled= findsP(*p);
+                    int index=findsP(*p);
+                    lastCalled=&index;
                     return Return;
                 }
             }
@@ -189,12 +190,12 @@ int main()
             else if (rr.stringValue=="Sequential")
             {
                 printf(" Reference detected is: Sequential");
-                printf("\n Period is %d",rr.intValue);
+                printf("\n Period is %d\n",rr.intValue);
             }
             else if (rr.stringValue=="Other")
             {
                 printf(" Reference detected is: Other");
-                printf("\n Period is");
+                printf("\n Period is %f \n",bufferCache-rr.intValue);
             }
         }
         printf("press 1 to enter values press 2 to exit : ");
