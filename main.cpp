@@ -38,6 +38,17 @@ int findsP( PHash p){
 }
 int *lastCalled= nullptr;
 DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
+
+    if(F.empty())
+    {
+        FHash f{};
+        f.start=curTime;
+        f.end=block;
+        f.lastTime=0;
+        f.period=INFINITE;
+        F.push_back(&f);
+    }
+
     if(P.empty())
     {
         PHash temp{};
@@ -50,8 +61,8 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
         rr.intValue=-1;
         rr.stringValue="Add more Values";
         return rr;
-
     }
+
     int check=0;
     DoubleReturn Return;
     //line 3
@@ -167,6 +178,9 @@ int main()
     int response;
     printf("press 1 to enter values press 2 to exit : ");
     scanf("%d",&response);
+    int countLoop=0;
+    int countSequence=0;
+    int countOther = 0;
     while(response==1) {
         std::vector<Input *> inputArray;
         printf("Inode  |  Block  |  PC  |  current time  |\n");
@@ -175,33 +189,45 @@ int main()
         inputArray.push_back(&temp);
 
         int blockCount = 0;
+
         for (auto Inp : inputArray) {
             DoubleReturn rr;
             rr = RACE(Inp->inode, Inp->block, Inp->pc, Inp->curTime, blockCount);
             if(rr.stringValue=="Add more Values");
             {
                 printf(" Add more Values...\n");
+
             }
             if(rr.stringValue=="looping")
             {
                 printf(" Reference detected is: Looping");
                 printf("\n Period is %d",rr.intValue);
+                countLoop++;
             }
             else if (rr.stringValue=="Sequential")
             {
                 printf(" Reference detected is: Sequential");
                 printf("\n Period is %d\n",rr.intValue);
+                countSequence++;
             }
             else if (rr.stringValue=="Other")
             {
                 printf(" Reference detected is: Other");
-                printf("\n Period is %f \n",bufferCache-rr.intValue);
+                countOther++;
             }
         }
         printf("press 1 to enter values press 2 to exit : ");
         scanf("%d",&response);
     }
+    int total =countLoop+countOther+countSequence;
+    printf("Partition of cache for Loop reference:  %f\n "
+           "for Sequence reference: %f\n"
+           "for Others: %f",bufferCache*countLoop/total,
+           bufferCache*countSequence/total,
+           bufferCache*countOther/total);
+
     printf("Exiting...\n");
+
     return 0;
 }
 /*Yifeng Zhu, et.al.[25] proposed a Robust
