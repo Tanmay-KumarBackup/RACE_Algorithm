@@ -1,10 +1,12 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #define INFINITE 9999
 #define a 0.5
 struct FHash{
     int inode,start,end,lastTime,period;
+    bool ghostRef;
 };
 struct PHash{
     int pc,fresh,reused,period;
@@ -18,10 +20,38 @@ struct Input{
     int inode , block , pc , curTime;
 };
 
+
+std::vector<FHash*> F;
+std::vector<PHash*> P;
 //here Race is going to act as a partition allocator
-DoubleReturn RACE(int inode,int block,int pc,int curTime){
-    std::vector<FHash*> F;
-    std::vector<PHash*> P;
+int findsP( PHash p){
+    int i=0;
+    for(auto x : P)
+    {
+        if(x==&p)
+        {
+            return i;
+        }
+        i++;
+    }
+    return -1;
+}
+int lastCalled;
+DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
+    if(P.empty())
+    {
+        PHash temp{};
+        temp.pc=pc;
+        temp.fresh=0;
+        temp.reused=0;
+        temp.period=INFINITE;
+        P.push_back(&temp);
+        DoubleReturn rr;
+        rr.intValue=-1;
+        rr.stringValue="Add more Values";
+        return rr;
+
+    }
     int check=0;
     DoubleReturn Return;
     //line 3
@@ -40,17 +70,26 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime){
         P.push_back(&temp);
     }
     //line 4
+
     int lastTime;
     for (auto f : F) {
-        if (f->inode == inode && f->start <= block <= f->end) {
-            lastTime = curTime - (block - f->start);//{consider "ghost" reference time of the 1st block}
+        if (f->inode == inode && f->start <= block <= f->end && !f->ghostRef) {
+            lastTime = curTime - (block - f->start);
+            if(countForGhost==0)
+            {
+                f->ghostRef = true;
+                countForGhost++;
+                break;
+            }
+            //{consider "ghost" reference time of the 1st block}
+
             f->period = a * f->period + (1 - a) * (lastTime - f->lastTime);//exponential average
             for (auto p : P) {
                 if (p->pc == pc) {
                     p->reused++;
                     p->fresh--;
                     p->period = a * f->period + (1 - a) * p->period;//exponential average
-                    //update last reference time of the 1st block;
+                    //updating last reference time of the 1st block;
 
                     if ()//access direction is reversed
                     {
@@ -58,6 +97,7 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime){
                     }
                     Return.stringValue= "looping";
                     Return.intValue=f->period;
+                    lastCalled= findsP(*p);
                     return Return;
                 }
             }
@@ -66,7 +106,7 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime){
 
     for(auto f : F)
     {
-        if(f->inode==inode && f->end==block-1)
+        if(f->inode==inode && f->end==block-1 && !f->ghostRef)
         {
             f->end=block;
             for (auto p : P)
@@ -98,7 +138,7 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime){
     {
         if(p->reused>=p->fresh)
         {
-            Return.stringValue= "Looping";
+            Return.stringValue= "looping";
             Return.intValue= p->period;
             return Return;
         }
@@ -119,26 +159,48 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime){
 
 int main()
 {
-    int bufferCache;
+    float bufferCache;
     printf("Enter the size of Buffer cache:\t");
-    scanf("%d",&bufferCache);
+    scanf("%f",&bufferCache);
 
-    int blockNum;
-    printf("Enter total number of blocks that you wish to enter: ");
-    scanf("%d",&blockNum);
-    std::vector<Input*> inputArray;
-    printf("Inode  |  Block  |  PC  |  curTime  |\n");
-    for(int i=0;i<blockNum;i++)
-    {
+    int response;
+    printf("press 1 to enter values press 2 to exit : ");
+    scanf("%d",&response);
+    while(response==1) {
+        std::vector<Input *> inputArray;
+        printf("Inode  |  Block  |  PC  |  current time  |\n");
         Input temp{};
-        scanf("%d %d %d %d",&temp.inode,&temp.block,&temp.pc,&temp.curTime);
+        scanf("%d %d %d %d", &temp.inode, &temp.block, &temp.pc, &temp.curTime);
         inputArray.push_back(&temp);
+
+        int blockCount = 0;
+        for (auto Inp : inputArray) {
+            DoubleReturn rr;
+            rr = RACE(Inp->inode, Inp->block, Inp->pc, Inp->curTime, blockCount);
+            if(rr.stringValue=="Add more Values");
+            {
+                printf(" Add more Values...\n");
+            }
+            if(rr.stringValue=="looping")
+            {
+                printf(" Reference detected is: Looping");
+                printf("\n Period is %d",rr.intValue);
+            }
+            else if (rr.stringValue=="Sequential")
+            {
+                printf(" Reference detected is: Sequential");
+                printf("\n Period is %d",rr.intValue);
+            }
+            else if (rr.stringValue=="Other")
+            {
+                printf(" Reference detected is: Other");
+                printf("\n Period is");
+            }
+        }
+        printf("press 1 to enter values press 2 to exit : ");
+        scanf("%d",&response);
     }
-    for(auto Inp : inputArray)
-    {
-        DoubleReturn rr;
-        rr =RACE(Inp->inode,Inp->block,Inp->pc,Inp->curTime);
-    }
+    printf("Exiting...\n");
     return 0;
 }
 /*Yifeng Zhu, et.al.[25] proposed a Robust
