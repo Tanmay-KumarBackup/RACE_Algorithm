@@ -1,12 +1,11 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #define INFINITE 9999
 #define a 0.5
 struct FHash{
     int inode,start,end,lastTime,period;
-    bool ghostRef;
+    bool ghostRef= false;
 };
 struct PHash{
     int pc,fresh,reused,period;
@@ -41,22 +40,23 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
 
     if(F.empty())
     {
-        FHash f{};
-        f.start=curTime;
-        f.end=block;
-        f.lastTime=0;
-        f.period=INFINITE;
-        F.push_back(&f);
+        FHash *f = new FHash;
+        f->start=block;
+        f->end=block;
+        f->lastTime=curTime;
+        f->inode=inode;
+        f->period=INFINITE;
+        F.push_back(f);
     }
 
     if(P.empty())
     {
-        PHash temp{};
-        temp.pc=pc;
-        temp.fresh=0;
-        temp.reused=0;
-        temp.period=INFINITE;
-        P.push_back(&temp);
+        PHash *temp=new PHash;
+        temp->pc=pc;
+        temp->fresh=0;
+        temp->reused=0;
+        temp->period=INFINITE;
+        P.push_back(temp);
         DoubleReturn rr;
         rr.intValue=-1;
         rr.stringValue="Add more Values";
@@ -76,9 +76,9 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
     //now inserting PC
     if(check==0)
     {
-        PHash temp{};
-        temp.pc=pc,temp.fresh=0,temp.reused=0,temp.period=INFINITE;
-        P.push_back(&temp);
+        PHash *temp=new PHash;
+        temp->pc=pc,temp->fresh=0,temp->reused=0,temp->period=INFINITE;
+        P.push_back(temp);
     }
     //line 4
 
@@ -131,11 +131,11 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
             }
         }
         else {
-            FHash *f1;
-            f1->inode=inode; f1->start=f->end;
+            FHash *f1=new FHash;
+            f1->inode=inode; f1->start=block;
             f1->end=block; f1->lastTime=curTime;
-            f->period=INFINITE;
-            F.push_back(f);
+            f1->period=INFINITE;
+            F.push_back(f1);
             for (auto p : P)
             {
                 if(p->pc==pc)
@@ -144,11 +144,12 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
                     break;
                 }
             }
+            break;
         }
     }
     for (auto p : P)
     {
-        if(p->reused>=p->fresh)
+        if(p->pc==pc && p->reused>=p->fresh)
         {
             Return.stringValue= "looping";
             Return.intValue= p->period;
@@ -157,7 +158,7 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
     }
     for (auto p : P)
     {//line number 21
-        if(p->fresh>threshold)//threshold is not defined
+        if(p->pc==pc && p->fresh>threshold)//threshold is not defined
         {
             Return.stringValue= "Sequential";
             Return.intValue= 0;
@@ -193,15 +194,15 @@ int main()
         for (auto Inp : inputArray) {
             DoubleReturn rr;
             rr = RACE(Inp->inode, Inp->block, Inp->pc, Inp->curTime, blockCount);
-            if(rr.stringValue=="Add more Values");
+            if(rr.stringValue=="Add more Values")
             {
                 printf(" Add more Values...\n");
 
             }
-            if(rr.stringValue=="looping")
+            else if(rr.stringValue=="looping")
             {
                 printf(" Reference detected is: Looping");
-                printf("\n Period is %d",rr.intValue);
+                printf("\n Period is %d\n",rr.intValue);
                 countLoop++;
             }
             else if (rr.stringValue=="Sequential")
@@ -220,9 +221,9 @@ int main()
         scanf("%d",&response);
     }
     int total =countLoop+countOther+countSequence;
-    printf("Partition of cache for Loop reference:  %f\n "
-           "for Sequence reference: %f\n"
-           "for Others: %f",bufferCache*countLoop/total,
+    printf("Partition of cache for Loop reference:  %2f\n "
+           "for Sequence reference: %2f\n"
+           "for Others: %2f\n",bufferCache*countLoop/total,
            bufferCache*countSequence/total,
            bufferCache*countOther/total);
 
