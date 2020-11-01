@@ -8,13 +8,5 @@ RACE algorithm will dynamically saperate the for different type of references an
 there will be two tables File table and PC table will decide that how the partition is to be maintained.<br>
 Dynamically the partition will change and will be displayed respectively.
 <br><br>
-<hr>
-<b>Right now there are few errors in the code such as:</b>
-<br>i am inable to understand what is "ghost" reference time in line number 5 of pseudo code<br>
-what to update in the last reference time of the 1st block in line number 9 of pseudo code<br>
-how to check whether the access direction is reversed<br>
-how to extend existing sequence in line number 13<br>
-what is threshold which is used in line 21<br>
-<hr>
-things other then that are all good and i guess that after solving these problem the code will be in working condition.<br>
+<br>
 Thank You
