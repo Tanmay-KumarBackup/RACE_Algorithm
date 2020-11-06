@@ -1,12 +1,11 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #define INFINITE 9999
 #define a 0.5
 struct FHash{
     int inode,start,end,lastTime,period;
-    bool ghostRef;
+    bool ghostRef= false;
 };
 struct PHash{
     int pc,fresh,reused,period;
@@ -15,7 +14,7 @@ struct DoubleReturn{
     std::string stringValue;
     int intValue=0;
 };
-int threshold=0;
+int threshold=10;
 struct Input{
     int inode , block , pc , curTime;
 };
@@ -42,10 +41,12 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
     if(F.empty())
     {
         FHash f{};
+        f.inode =inode;
         f.start=curTime;
         f.end=block;
         f.lastTime=0;
         f.period=INFINITE;
+
         F.push_back(&f);
     }
 
@@ -102,7 +103,9 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
                     p->period = a * f->period + (1 - a) * p->period;//exponential average
                     //updating last reference time of the 1st block;
                     int index1=findsP(*p);
-                    if (index1<*lastCalled)//access direction is reversed
+
+
+                    if (index1<*lastCalled) //access direction is reversed
                     {
                         f->lastTime = lastTime;
                     }
@@ -131,11 +134,11 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
             }
         }
         else {
-            FHash *f1;
-            f1->inode=inode; f1->start=f->end;
-            f1->end=block; f1->lastTime=curTime;
-            f->period=INFINITE;
-            F.push_back(f);
+            FHash f1;
+            f1.inode=inode; f1.start=block;
+            f1.end=block; f1.lastTime=curTime;
+            f1.period=INFINITE;
+            F.push_back(&f1);
             for (auto p : P)
             {
                 if(p->pc==pc)
@@ -183,7 +186,7 @@ int main()
     int countOther = 0;
     while(response==1) {
         std::vector<Input *> inputArray;
-        printf("Inode  |  Block  |  PC  |  current time  |\n");
+        printf("Inode  |  Block Size  |  PC  |  current time  |\n");
         Input temp{};
         scanf("%d %d %d %d", &temp.inode, &temp.block, &temp.pc, &temp.curTime);
         inputArray.push_back(&temp);
@@ -193,27 +196,27 @@ int main()
         for (auto Inp : inputArray) {
             DoubleReturn rr;
             rr = RACE(Inp->inode, Inp->block, Inp->pc, Inp->curTime, blockCount);
-            if(rr.stringValue=="Add more Values");
+            if(rr.stringValue=="Add more Values")
             {
                 printf(" Add more Values...\n");
 
             }
-            if(rr.stringValue=="looping")
+            else if(rr.stringValue=="looping")
             {
                 printf(" Reference detected is: Looping");
                 printf("\n Period is %d",rr.intValue);
-                countLoop++;
+                countLoop=Inp->block+countLoop;
             }
             else if (rr.stringValue=="Sequential")
             {
                 printf(" Reference detected is: Sequential");
                 printf("\n Period is %d\n",rr.intValue);
-                countSequence++;
+                countSequence=Inp->block+countSequence;
             }
             else if (rr.stringValue=="Other")
             {
                 printf(" Reference detected is: Other");
-                countOther++;
+                countOther=Inp->block+countOther;
             }
         }
         printf("press 1 to enter values press 2 to exit : ");
