@@ -14,7 +14,7 @@ struct DoubleReturn{
     std::string stringValue;
     int intValue=0;
 };
-int threshold=10;
+int threshold=0;
 struct Input{
     int inode , block , pc , curTime;
 };
@@ -40,24 +40,23 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
 
     if(F.empty())
     {
-        FHash f{};
-        f.inode =inode;
-        f.start=curTime;
-        f.end=block;
-        f.lastTime=0;
-        f.period=INFINITE;
-
-        F.push_back(&f);
+        FHash *f = new FHash;
+        f->start=block;
+        f->end=block;
+        f->lastTime=curTime;
+        f->inode=inode;
+        f->period=INFINITE;
+        F.push_back(f);
     }
 
     if(P.empty())
     {
-        PHash temp{};
-        temp.pc=pc;
-        temp.fresh=0;
-        temp.reused=0;
-        temp.period=INFINITE;
-        P.push_back(&temp);
+        PHash *temp=new PHash;
+        temp->pc=pc;
+        temp->fresh=0;
+        temp->reused=0;
+        temp->period=INFINITE;
+        P.push_back(temp);
         DoubleReturn rr;
         rr.intValue=-1;
         rr.stringValue="Add more Values";
@@ -77,9 +76,9 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
     //now inserting PC
     if(check==0)
     {
-        PHash temp{};
-        temp.pc=pc,temp.fresh=0,temp.reused=0,temp.period=INFINITE;
-        P.push_back(&temp);
+        PHash *temp=new PHash;
+        temp->pc=pc,temp->fresh=0,temp->reused=0,temp->period=INFINITE;
+        P.push_back(temp);
     }
     //line 4
 
@@ -103,9 +102,7 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
                     p->period = a * f->period + (1 - a) * p->period;//exponential average
                     //updating last reference time of the 1st block;
                     int index1=findsP(*p);
-
-
-                    if (index1<*lastCalled) //access direction is reversed
+                    if (index1<*lastCalled)//access direction is reversed
                     {
                         f->lastTime = lastTime;
                     }
@@ -134,11 +131,11 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
             }
         }
         else {
-            FHash f1;
-            f1.inode=inode; f1.start=block;
-            f1.end=block; f1.lastTime=curTime;
-            f1.period=INFINITE;
-            F.push_back(&f1);
+            FHash *f1=new FHash;
+            f1->inode=inode; f1->start=block;
+            f1->end=block; f1->lastTime=curTime;
+            f1->period=INFINITE;
+            F.push_back(f1);
             for (auto p : P)
             {
                 if(p->pc==pc)
@@ -147,11 +144,12 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
                     break;
                 }
             }
+            break;
         }
     }
     for (auto p : P)
     {
-        if(p->reused>=p->fresh)
+        if(p->pc==pc && p->reused>=p->fresh)
         {
             Return.stringValue= "looping";
             Return.intValue= p->period;
@@ -160,7 +158,7 @@ DoubleReturn RACE(int inode,int block,int pc,int curTime, int &countForGhost){
     }
     for (auto p : P)
     {//line number 21
-        if(p->fresh>threshold)//threshold is not defined
+        if(p->pc==pc && p->fresh>threshold)//threshold is not defined
         {
             Return.stringValue= "Sequential";
             Return.intValue= 0;
@@ -186,7 +184,7 @@ int main()
     int countOther = 0;
     while(response==1) {
         std::vector<Input *> inputArray;
-        printf("Inode  |  Block Size  |  PC  |  current time  |\n");
+        printf("Inode  |  Block  |  PC  |  current time  |\n");
         Input temp{};
         scanf("%d %d %d %d", &temp.inode, &temp.block, &temp.pc, &temp.curTime);
         inputArray.push_back(&temp);
@@ -204,28 +202,28 @@ int main()
             else if(rr.stringValue=="looping")
             {
                 printf(" Reference detected is: Looping");
-                printf("\n Period is %d",rr.intValue);
-                countLoop=Inp->block+countLoop;
+                printf("\n Period is %d\n",rr.intValue);
+                countLoop++;
             }
             else if (rr.stringValue=="Sequential")
             {
                 printf(" Reference detected is: Sequential");
                 printf("\n Period is %d\n",rr.intValue);
-                countSequence=Inp->block+countSequence;
+                countSequence++;
             }
             else if (rr.stringValue=="Other")
             {
                 printf(" Reference detected is: Other");
-                countOther=Inp->block+countOther;
+                countOther++;
             }
         }
         printf("press 1 to enter values press 2 to exit : ");
         scanf("%d",&response);
     }
     int total =countLoop+countOther+countSequence;
-    printf("Partition of cache for Loop reference:  %f\n "
-           "for Sequence reference: %f\n"
-           "for Others: %f",bufferCache*countLoop/total,
+    printf("Partition of cache for Loop reference:  %2f\n "
+           "for Sequence reference: %2f\n"
+           "for Others: %2f\n",bufferCache*countLoop/total,
            bufferCache*countSequence/total,
            bufferCache*countOther/total);
 
@@ -233,21 +231,3 @@ int main()
 
     return 0;
 }
-/*Yifeng Zhu, et.al.[25] proposed a Robust
-Adaptive buffer Cache management scheme
-(RACE). In this scheme cache is partitioned by
-using marginal gain function to allocate blocks
-according to its access pattern. To know block
-access pattern it keeps track of references to a
-block by using file hash table and PC hash table.
-File hash table uses attributes such as inode, start
-and end block number, the last access made to the
-first block, looping period, last access to the
-referenced block, last accessed block and a PC
-hash table uses attributes such as fresh counter,
-reuse counter. After pattern detection block is
-allocated into cache if free space is available or
-replacement is done with the existing replacement
-policy which is best suitable for the detected
-access pattern.
- */
